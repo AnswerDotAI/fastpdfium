@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fastpdfium"
+dynamic = ["version"]
+description = "An ergonomic, fastai-style wrapper over pypdfium2 for reading, searching, previewing, and editing PDFs"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [{name = "fastpdfium contributors", email = "nc@answer.ai"}]
+keywords = ['pdf', 'pdfium', 'pypdfium2']
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = ['pypdfium2', 'fastcore', 'pillow']
+
+[project.urls]
+Repository = "https://github.com/AnswerDotAI/fastpdfium"
+Documentation = "https://AnswerDotAI.github.io/fastpdfium/"
+
+[project.entry-points.nbdev]
+fastpdfium = "fastpdfium._modidx:d"
+
+[project.entry-points.pyskills]
+fastpdfium = "fastpdfium.skill"
+
+[tool.setuptools.dynamic]
+version = {attr = "fastpdfium.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["fastpdfium"]
+
+[tool.nbdev]

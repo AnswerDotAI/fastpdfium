@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "fastpdfium"
+  site-url: "https://AnswerDotAI.github.io/fastpdfium"
+  description: "An ergonomic, fastai-style wrapper over pypdfium2 for reading, searching, previewing, and editing PDFs"
+  repo-branch: main
+  repo-url: "https://github.com/AnswerDotAI/fastpdfium"
