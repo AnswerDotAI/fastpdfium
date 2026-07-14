@@ -1,0 +1,112 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "fastpdfium",
+    "section": "",
+    "text": "fastpdfium adds a small ergonomic layer over pypdfium2, the Python binding for PDFium, the PDF engine Chrome uses. It gives you page-tagged text extraction, content-based search whose hits carry their matched text and surroundings, previews with matches highlighted on the rendered page, and simple authoring (text, boxes, images) that pypdfium2 alone doesn’t expose. Pages get a _repr_png_, so a bare PdfPage expression displays itself in any rich frontend: Jupyter, solveit, or an AI-driven kernel.",
+    "crumbs": [
+      "fastpdfium"
+    ]
+  },
+  {
+    "objectID": "index.html#license",
+    "href": "index.html#license",
+    "title": "fastpdfium",
+    "section": "License",
+    "text": "License\nPDFium and pypdfium2 are permissively licensed, so fastpdfium is plain Apache-2.0. If you need structured layout extraction, redaction, or richer authoring, PyMuPDF does more at the cost of AGPL; see fastfitz.",
+    "crumbs": [
+      "fastpdfium"
+    ]
+  },
+  {
+    "objectID": "index.html#install",
+    "href": "index.html#install",
+    "title": "fastpdfium",
+    "section": "Install",
+    "text": "Install\npip install fastpdfium\nfastpdfium also registers a pyskill, so AI kernels with pyskills discovery gain PDF reading and editing automatically when fastpdfium is installed.",
+    "crumbs": [
+      "fastpdfium"
+    ]
+  },
+  {
+    "objectID": "index.html#quick-start",
+    "href": "index.html#quick-start",
+    "title": "fastpdfium",
+    "section": "Quick start",
+    "text": "Quick start\n\nimport pypdfium2 as pdfium\nfrom fastpdfium.core import *\n\npdf = pdfium.PdfDocument('some.pdf')\nprint(pdf.text(pages=[0]))                 # cheap first: page-tagged text\nms = pdf.search('Delaware')                # content-based matches across the document\nms[0].ctx()                                # the hit marked inline: '...a **Delaware** corporation...'\nms[0].page.preview('Delaware', crop=True)  # see it highlighted on the page\npdf[0]                                     # bare page displays itself\n\ndoc = pdfium.PdfDocument.new()             # authoring from nothing\npg = doc.new_page()\npg.insert_text('Hello PDF', 72, 92, size=14)\ndoc.save('hello.pdf')",
+    "crumbs": [
+      "fastpdfium"
+    ]
+  },
+  {
+    "objectID": "core.html",
+    "href": "core.html",
+    "title": "core",
+    "section": "",
+    "text": "fastpdfium is a small ergonomic layer over pypdfium2 for working with PDFs interactively – in Jupyter, solveit, or an AI-driven kernel. The design rule: reach for text first (cheap, precise), and for pixels when layout matters. Search is content-based: a hit knows its matched text and surroundings, and can show itself highlighted on the rendered page.\npypdfium2 wraps PDFium, the permissively-licensed PDF engine from Chrome, so fastpdfium is plain Apache-2.0.\nfrom fastcore.test import *",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#pages-know-their-number",
+    "href": "core.html#pages-know-their-number",
+    "title": "core",
+    "section": "Pages know their number",
+    "text": "Pages know their number\npypdfium2 pages don’t record their index, but page-tagged text and search results need it. We wrap the two ways a page is loaded so every page carries a number (and new_page gains an A4 default while we’re at it).\n\n\nPdfDocument.new_page\ndef new_page(\n    width:int=595, height:int=842, index:NoneType=None\n):\nAppend (or insert at index) a blank widthxheight point page, numbered like get_page\n\n\n\nPdfDocument.get_page\ndef get_page(\n    index\n):\nLoad page index, remembering it as page.number\n\nd = pdfium.PdfDocument.new()\npg = d.new_page()\ntest_eq(pg.number, 0)\ntest_eq(pg.get_size(), (595, 842))\ntest_eq(d[0].number, 0)",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#creating-pdfs",
+    "href": "core.html#creating-pdfs",
+    "title": "core",
+    "section": "Creating PDFs",
+    "text": "Creating PDFs\npypdfium2’s helpers stop at page shuffling, but PDFium’s raw API can author content. These helpers cover the common needs: text, boxes, and images. Positions are in points from the top-left of the page, matching how you look at a rendered preview; the y-flip to PDF’s bottom-left convention happens inside.\n\n\nPdfPage.insert_text\ndef insert_text(\n    text, # Text to insert; newlines start new lines\n    x:int=72, # Baseline start x, in points from the left\n    y:int=72, # Baseline start y, in points from the top\n    size:int=12, # Font size in points\n    font:str='Helvetica', # Standard PDF font name\n):\nInsert text on the page at x,y\n\npg.insert_text('Hello\\nPDF world', 72, 100, size=14)\ntest_eq(pg.get_textpage().get_text_range(), 'Hello\\r\\nPDF world')\n\n\n\n\nPdfPage.draw_rect\ndef draw_rect(\n    x0, y0, x1, y1, # Corners, in points from the top-left\n    stroke:tuple=(255, 0, 0, 255), # Stroke RGBA, 0-255 each (None for none)\n    fill:NoneType=None, # Fill RGBA (None for none)\n    width:int=1, # Stroke width in points\n):\nDraw a rectangle from x0,y0 to x1,y1\n\np2 = d.new_page(100, 100)\np2.draw_rect(10, 10, 90, 90, width=4)\ntest_eq(p2.render(scale=1).to_pil().getpixel((50, 10))[:3], (255, 0, 0))\np2.render(scale=2).to_pil()\n\n\n\n\n\n\n\n\n\n\n\nPdfPage.insert_image\ndef insert_image(\n    img, # PIL image, or a path PIL can open\n    x:int=72, # Left edge of the placed image, in points\n    y:int=72, # Top edge of the placed image, in points\n    w:NoneType=None, # Width in points (default: pixel size; aspect kept if only one given)\n    h:NoneType=None, # Height in points\n):\nPlace img at x,y (stored as JPEG)\n\np3 = d.new_page(100, 100)\np3.insert_image(Image.new('RGB', (40, 30), 'orange'), 30, 40)\ntest_close(p3.render(scale=1).to_pil().getpixel((50, 55))[:3], (255, 165, 0), eps=20)\n\nSerializing to bytes rounds out authoring: build a document in memory and hand it anywhere that expects PDF data.\n\n\n\nPdfDocument.tobytes\ndef tobytes()-&gt;bytes:\nThe document serialized as PDF bytes\n\nb = d.tobytes()\ntest_eq(b[:5], b'%PDF-')\ntest_eq(len(pdfium.PdfDocument(b)), 3)",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#a-sample-document",
+    "href": "core.html#a-sample-document",
+    "title": "core",
+    "section": "A sample document",
+    "text": "A sample document\nWith authoring in hand, the rest of the notebook reads a small two-page PDF built right here, so the demos are deterministic and self-contained.\n\nsmpl = pdfium.PdfDocument.new()\nfor lines in (['CERTIFICATE OF INCORPORATION','OF','EXAMPLE CORP','a Delaware corporation'],\n              ['ARTICLE ONE','The name of the corporation is','Example Corp']):\n    smpl.new_page().insert_text('\\n'.join(lines), 72, 92, size=14)\npg0 = smpl[0]",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#text",
+    "href": "core.html#text",
+    "title": "core",
+    "section": "Text",
+    "text": "Text\nMost questions about a PDF are answered by its text. Page.text normalizes PDFium’s CRLF line breaks; Document.text gives the whole document (or chosen pages) in one string, with page markers so line references stay grounded.\n\n\nPdfPage.text\ndef text()-&gt;str:\nPlain text of the page\n\ntest_eq(pg0.text(), 'CERTIFICATE OF INCORPORATION\\nOF\\nEXAMPLE CORP\\na Delaware corporation')\n\n\n\n\nPdfDocument.text\ndef text(\n    pages:NoneType=None\n)-&gt;str:\nPlain text of pages (default: all), with --- page N --- separators\n\nt = smpl.text()\nassert 'CERTIFICATE OF INCORPORATION' in t and '--- page 1 ---' in t\nassert 'ARTICLE ONE' not in smpl.text(pages=[0])\nprint(t)\n\n--- page 0 ---\nCERTIFICATE OF INCORPORATION\nOF\nEXAMPLE CORP\na Delaware corporation\n--- page 1 ---\nARTICLE ONE\nThe name of the corporation is\nExample Corp",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#search",
+    "href": "core.html#search",
+    "title": "core",
+    "section": "Search",
+    "text": "Search\nSearch is content-based, PDFium’s way: a Match is a range of characters on a page, so it knows its matched text and can show the text around it – which is what an LLM (or a person) actually wants from a search hit. Geometry stays internal, used only to draw highlights.\n\n\nPdfDocument.search\ndef search(\n    q, # Text to search for\n    match_case:bool=False, # Case-sensitive?\n    match_whole_word:bool=False, # Whole words only?\n    consecutive:bool=False, # Allow overlapping matches?\n)-&gt;list:\nAll Matches for q across the document\n\n\n\nPdfPage.search\ndef search(\n    q, # Text to search for\n    match_case:bool=False, # Case-sensitive?\n    match_whole_word:bool=False, # Whole words only?\n    consecutive:bool=False, # Allow overlapping matches?\n)-&gt;list:\nAll Matches for q on this page\n\nsource\n\n\nMatch\ndef Match(\n    page, i, n, tp:NoneType=None\n):\nA search hit: chars i to i+n on page\n\nms = smpl.search('corporation')\ntest_eq([m.page.number for m in ms], [0, 0, 1])\ntest_eq(ms[1].text, 'corporation')\ntest_eq(smpl.search('nonexistent'), [])\nms\n\n[page 0: CERTIFICATE OF IN**CORPORATION** OF EXAMPLE CORP a Delaware corporati,\n page 0: RPORATION OF EXAMPLE CORP a Delaware **corporation**,\n page 1: ARTICLE ONE The name of the **corporation** is Example Corp]\n\n\nThe match options come straight from PDFium, and ctx gives an LLM-ready snippet: the hit marked inline, with its surroundings.\n\ntest_eq(len(smpl.search('CORPORATION', match_case=True)), 1)\nassert '**corporation**' in ms[1].ctx()\nms[1].ctx(chars=12)\n\n' a Delaware **corporation**'",
+    "crumbs": [
+      "core"
+    ]
+  },
+  {
+    "objectID": "core.html#preview",
+    "href": "core.html#preview",
+    "title": "core",
+    "section": "Preview",
+    "text": "Preview\nPage.preview renders to a PIL image at dpi (default 150: a page is ~1650px on the long edge, comfortably readable for vision models while staying cheap). Pass a query q and the matches are outlined in red; add crop=True to cut down to just the matched region plus a margin of context. PDFium’s hit boxes hug the glyphs, so highlights get a couple points of breathing room.\n\n\nPdfPage.preview\ndef preview(\n    q:NoneType=None, # Text whose matches to highlight\n    dpi:int=150, # Render resolution\n    crop:bool=False, # Crop to the matched region?\n    margin:int=24, # Points of context around a crop\n):\nRender to a PIL image, highlighting and optionally cropping to q’s matches\n\nim = pg0.preview()\nassert abs(im.width - 595*150/72) &lt;= 1 and abs(im.height - 842*150/72) &lt;= 1\ntest_fail(lambda: pg0.preview('missing text'), contains='not found')\npg0.preview('CERTIFICATE OF INCORPORATION')\n\n\n\n\n\n\n\n\ncrop=True renders just the neighborhood of the hits – the cheap way to show a vision model exactly the region that matters:\n\npg0.preview('Delaware', crop=True)\n\n\n\n\n\n\n\n\n\n\nPages display themselves\nWith a _repr_png_, a bare Page expression renders visually in any rich frontend.\n\nassert pg0._repr_png_()[:8] == b'\\x89PNG\\r\\n\\x1a\\n'\npg0\n\n\n\n\n\n\n\n\nThe idioms compose: search the document, read a match in context, then look at it on the page.\n\nm = smpl.search('Delaware')[0]\nm.page.preview('Delaware', crop=True)",
+    "crumbs": [
+      "core"
+    ]
+  }
+]
